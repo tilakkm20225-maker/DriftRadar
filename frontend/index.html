@@ -1,0 +1,816 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DriftRadar cybersecurity ML reliability monitoring dashboard">
+  <title>DriftRadar | Model Reliability</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">D</span>
+        <div><strong>DriftRadar</strong><small>MODEL RELIABILITY</small></div>
+      </div>
+
+      <nav>
+        <a class="active" href="#overview">Overview</a>
+        <a href="#baseline">Baselines</a>
+        <a href="#analysis">Drift analysis</a>
+        <a href="#reliability">Model reliability</a>
+        <a href="#threat-intelligence">Threat intelligence</a>
+        <a href="#attack-chains">Attack chains</a>
+        <a href="#history">History</a>
+        <a href="#security-overview">Security Overview</a>
+        <a href="#security-posture">Security Posture</a>
+        <a href="#security-analytics">Severity Analytics</a>
+        <a href="#security-timeline">Security Timeline</a>
+        <a href="#security-alerts">Prioritized Alerts</a>
+      </nav>
+
+      <div class="side-note">
+        <span class="pulse"></span> API connection
+        <b id="connection">Checking…</b>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CYBERSECURITY INTELLIGENCE</p>
+          <h1>Model reliability overview</h1>
+          <p class="muted">Monitor changes in the network data your detection models depend on.</p>
+        </div>
+        <button class="secondary" id="refreshBtn">↻ Refresh</button>
+      </header>
+
+      <!-- M1 OVERVIEW -->
+      <section class="stats" id="overview">
+        <article class="stat">
+          <span>Registered baselines</span>
+          <strong id="baselineCount">—</strong>
+          <small>Reference datasets</small>
+        </article>
+        <article class="stat">
+          <span>Analyses completed</span>
+          <strong id="analysisCount">—</strong>
+          <small>Latest 50 records</small>
+        </article>
+        <article class="stat">
+          <span>Latest result</span>
+          <strong class="status-text" id="latestStatus">—</strong>
+          <small>Most recent analysis</small>
+        </article>
+      </section>
+
+      <!-- M1 BASELINE AND DRIFT ANALYSIS -->
+      <section class="grid-two">
+        <article class="panel" id="baseline">
+          <div class="panel-heading">
+            <div><p class="eyebrow">STEP 01</p><h2>Register a baseline</h2></div>
+            <span class="tag">CSV upload</span>
+          </div>
+
+          <p class="muted">Upload a reference dataset representing expected network behaviour. Use numeric feature columns and at least 20 rows.</p>
+
+          <form id="baselineForm">
+            <label for="baselineName">Baseline name</label>
+            <input id="baselineName" name="name" required maxlength="100" placeholder="e.g. Office network — normal traffic">
+
+            <label for="baselineFile">Reference CSV</label>
+            <input id="baselineFile" name="file" type="file" accept=".csv,text/csv" required>
+
+            <button class="primary" type="submit">Register baseline</button>
+          </form>
+          <p class="feedback" id="baselineFeedback" aria-live="polite"></p>
+        </article>
+
+        <article class="panel" id="analysis">
+          <div class="panel-heading">
+            <div><p class="eyebrow">STEP 02</p><h2>Analyze current traffic</h2></div>
+            <span class="tag">PSI + KS test</span>
+          </div>
+
+          <p class="muted">Compare a new CSV against a registered baseline. Column names must match exactly.</p>
+
+          <form id="analysisForm">
+            <label for="baselineSelect">Select baseline</label>
+            <select id="baselineSelect" required>
+              <option value="">Loading baselines…</option>
+            </select>
+
+            <label for="currentFile">Current traffic CSV</label>
+            <input id="currentFile" type="file" accept=".csv,text/csv" required>
+
+            <button class="primary" type="submit">Run drift analysis</button>
+          </form>
+          <p class="feedback" id="analysisFeedback" aria-live="polite"></p>
+        </article>
+      </section>
+
+      <!-- M1 FEATURE RESULTS -->
+      <section class="panel result-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">LATEST OUTPUT</p><h2>Feature-level findings</h2></div>
+          <span id="resultPill" class="tag">Awaiting analysis</span>
+        </div>
+
+        <p class="muted" id="interpretation">Run an analysis to see per-feature drift metrics here.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th><th>PSI</th><th>KS statistic</th>
+                <th>KS p-value</th><th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="5" class="empty">No analysis has been run yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- M2 MODEL RELIABILITY -->
+      <section id="reliability" class="reliability-section">
+        <div class="section-heading">
+          <p class="eyebrow">MILESTONE 02</p>
+          <h2>Model reliability intelligence</h2>
+          <p class="muted">Evaluate cybersecurity model predictions against verified ground-truth labels.</p>
+        </div>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">STEP 03</p>
+              <h2>Evaluate detection model</h2>
+            </div>
+            <span class="tag">Ground-truth evaluation</span>
+          </div>
+
+          <p class="muted">
+            Submit actual labels and model predictions. Use 1 for threat and 0 for benign.
+            Both lists must contain at least 20 corresponding records.
+          </p>
+
+          <form id="reliabilityForm">
+            <label for="modelVersion">Model version</label>
+            <input
+              id="modelVersion"
+              type="text"
+              maxlength="100"
+              required
+              placeholder="e.g. IDS-v1.0"
+            >
+
+            <label for="trueLabels">Verified actual labels (y_true)</label>
+            <textarea
+              id="trueLabels"
+              rows="4"
+              required
+              placeholder="1,1,1,0,0,1,0,1,..."
+            ></textarea>
+
+            <label for="predictedLabels">Model predictions (y_pred)</label>
+            <textarea
+              id="predictedLabels"
+              rows="4"
+              required
+              placeholder="1,1,0,0,0,1,0,1,..."
+            ></textarea>
+
+            <p class="muted">Enter comma-separated binary values. Each actual label must correspond to the prediction at the same position.</p>
+
+            <button class="primary" type="submit">Evaluate model reliability</button>
+          </form>
+
+          <p class="feedback" id="reliabilityFeedback" aria-live="polite"></p>
+        </article>
+
+        <!-- M2 METRIC CARDS -->
+        <div class="stats reliability-stats">
+          <article class="stat">
+            <span>Precision</span>
+            <strong id="metricPrecision">—</strong>
+            <small>Threat prediction correctness</small>
+          </article>
+          <article class="stat">
+            <span>Recall</span>
+            <strong id="metricRecall">—</strong>
+            <small>Threat detection coverage</small>
+          </article>
+          <article class="stat">
+            <span>F1-score</span>
+            <strong id="metricF1">—</strong>
+            <small>Precision and recall balance</small>
+          </article>
+          <article class="stat">
+            <span>False-positive rate</span>
+            <strong id="metricFPR">—</strong>
+            <small>Benign events flagged as threats</small>
+          </article>
+          <article class="stat">
+            <span>Accuracy</span>
+            <strong id="metricAccuracy">—</strong>
+            <small>Overall prediction correctness</small>
+          </article>
+        </div>
+
+        <!-- M2 CONFUSION MATRIX -->
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">MODEL DIAGNOSTICS</p>
+              <h2>Confusion matrix</h2>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Actual / Predicted</th>
+                  <th>Threat</th>
+                  <th>Benign</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>Threat</th>
+                  <td id="matrixTP">—</td>
+                  <td id="matrixFN">—</td>
+                </tr>
+                <tr>
+                  <th>Benign</th>
+                  <td id="matrixFP">—</td>
+                  <td id="matrixTN">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <!-- M2 HISTORY -->
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">MODEL AUDIT TRAIL</p>
+              <h2>Reliability evaluation history</h2>
+            </div>
+            <button class="secondary" id="reliabilityRefreshBtn" type="button">↻ Refresh history</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model version</th>
+                  <th>Samples</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1-score</th>
+                  <th>FPR</th>
+                  <th>Accuracy</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody id="reliabilityHistoryBody">
+                <tr><td colspan="7" class="empty">No reliability evaluations loaded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+
+<!-- M4 INTELLIGENT ATTACK CHAIN CORRELATION -->
+<section id="attack-chains" class="reliability-section">
+
+  <div class="section-heading">
+    <p class="eyebrow">MILESTONE 04</p>
+    <h2>Intelligent Attack Chain Correlation</h2>
+    <p class="muted">
+      Identify multi-stage suspicious activity through chronological
+      correlation of security events.
+    </p>
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">STEP 05</p>
+        <h2>Analyze Attack Chains</h2>
+      </div>
+      <span class="tag">30-minute correlation window</span>
+    </div>
+
+    <p class="muted">
+      Submit security events containing source IP, event type,
+      severity and timezone-aware timestamp.
+    </p>
+
+    <form id="attackChainForm">
+      <label for="attackChainEvents">Security Events (JSON)</label>
+
+      <textarea
+        id="attackChainEvents"
+        rows="14"
+        required
+        spellcheck="false"
+      >[
+  {
+    "source_ip": "192.168.1.10",
+    "event_type": "port_scan",
+    "severity": "HIGH",
+    "timestamp": "2026-11-24T10:00:00+00:00"
+  },
+  {
+    "source_ip": "192.168.1.10",
+    "event_type": "failed_login",
+    "severity": "HIGH",
+    "timestamp": "2026-11-24T10:05:00+00:00"
+  },
+  {
+    "source_ip": "192.168.1.10",
+    "event_type": "successful_login",
+    "severity": "CRITICAL",
+    "timestamp": "2026-11-24T10:10:00+00:00"
+  },
+  {
+    "source_ip": "192.168.1.10",
+    "event_type": "malware_detected",
+    "severity": "CRITICAL",
+    "timestamp": "2026-11-24T10:15:00+00:00"
+  }
+]</textarea>
+
+      <button class="primary" type="submit">
+        Analyze Attack Chains
+      </button>
+    </form>
+
+    <p class="feedback" id="attackChainFeedback"
+       aria-live="polite"></p>
+  </article>
+
+  <div class="stats reliability-stats">
+
+    <article class="stat">
+      <span>Events Analyzed</span>
+      <strong id="attackEventCount">—</strong>
+      <small>Latest analysis</small>
+    </article>
+
+    <article class="stat">
+      <span>Chains Detected</span>
+      <strong id="attackChainCount">—</strong>
+      <small>Correlated sequences</small>
+    </article>
+
+    <article class="stat">
+      <span>Stages Identified</span>
+      <strong id="attackStageCount">—</strong>
+      <small>Latest detected chain</small>
+    </article>
+
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">DETECTION OUTPUT</p>
+        <h2>Detected Attack Chains</h2>
+      </div>
+      <span class="tag" id="attackResultTag">
+        Awaiting analysis
+      </span>
+    </div>
+
+    <div id="attackChainResults">
+      <p class="empty">
+        Submit events to view detected attack sequences.
+      </p>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">AUDIT TRAIL</p>
+        <h2>Attack Chain History</h2>
+      </div>
+
+      <button
+        class="secondary"
+        id="attackChainRefreshBtn"
+        type="button"
+      >
+        ↻ Refresh History
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Record ID</th>
+            <th>Events</th>
+            <th>Chains</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+
+        <tbody id="attackChainHistoryBody">
+          <tr>
+            <td colspan="4" class="empty">
+              No attack-chain history loaded yet.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+</section>
+
+
+      <!-- M1 ANALYSIS HISTORY -->
+      <section class="panel" id="history">
+
+
+<!-- M3 THREAT ADAPTATION INTELLIGENCE -->
+<section id="threat-intelligence" class="reliability-section">
+
+  <div class="section-heading">
+    <p class="eyebrow">MILESTONE 03</p>
+    <h2>Threat Adaptation Intelligence</h2>
+    <p class="muted">
+      Identify emerging threat-related patterns and generate
+      evidence-based investigation recommendations.
+    </p>
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">STEP 04</p>
+        <h2>Analyze security events</h2>
+      </div>
+      <span class="tag">Threat pattern analysis</span>
+    </div>
+
+    <p class="muted">
+      Submit a JSON array of security events. Each event requires
+      an event type, severity, and timezone-aware timestamp.
+    </p>
+
+    <form id="threatIntelligenceForm">
+      <label for="threatEvents">Security events (JSON)</label>
+
+      <textarea
+        id="threatEvents"
+        rows="12"
+        required
+        spellcheck="false"
+        placeholder='[
+  {
+    "event_type": "failed_login",
+    "severity": "HIGH",
+    "source_ip": "192.168.1.50",
+    "timestamp": "2026-11-23T10:00:00+05:30",
+    "destination_port": 443
+  }
+]'
+      ></textarea>
+
+      <button class="primary" type="submit">
+        Analyze threat patterns
+      </button>
+    </form>
+
+    <p
+      class="feedback"
+      id="threatIntelligenceFeedback"
+      aria-live="polite"
+    ></p>
+  </article>
+
+  <div class="stats reliability-stats">
+    <article class="stat">
+      <span>Events analyzed</span>
+      <strong id="threatEventCount">—</strong>
+      <small>Latest analysis</small>
+    </article>
+
+    <article class="stat">
+      <span>Patterns detected</span>
+      <strong id="threatPatternCount">—</strong>
+      <small>Configured indicators</small>
+    </article>
+
+    <article class="stat">
+      <span>Unique sources</span>
+      <strong id="threatSourceCount">—</strong>
+      <small>Observed source addresses</small>
+    </article>
+
+    <article class="stat">
+      <span>Recommendations</span>
+      <strong id="threatRecommendationCount">—</strong>
+      <small>Suggested investigations</small>
+    </article>
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">DETECTION OUTPUT</p>
+        <h2>Detected threat patterns</h2>
+      </div>
+    </div>
+
+    <p class="muted" id="threatInterpretation">
+      Submit security events to see detected patterns.
+    </p>
+
+    <div id="threatPatterns">
+      <p class="empty">No threat analysis available yet.</p>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">RESPONSE INTELLIGENCE</p>
+        <h2>Adaptation recommendations</h2>
+      </div>
+    </div>
+
+    <div id="threatRecommendations">
+      <p class="empty">No recommendations available yet.</p>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">THREAT AUDIT TRAIL</p>
+        <h2>Threat intelligence history</h2>
+      </div>
+
+      <button
+        class="secondary"
+        id="threatHistoryRefreshBtn"
+        type="button"
+      >
+        Refresh history
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Record ID</th>
+            <th>Events</th>
+            <th>Patterns</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+
+        <tbody id="threatHistoryBody">
+          <tr>
+            <td colspan="4" class="empty">
+              No threat intelligence history loaded yet.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+</section>
+
+        <div class="panel-heading">
+          <div><p class="eyebrow">AUDIT TRAIL</p><h2>Recent drift analyses</h2></div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Analysis ID</th><th>Baseline ID</th><th>Result</th>
+                <th>Drifted features</th><th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="5" class="empty">No history yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+<!-- ===================================== -->
+<!-- M5 UNIFIED SECURITY INTELLIGENCE -->
+<!-- ===================================== -->
+
+<section id="security-overview" class="reliability-section">
+  <div class="section-heading">
+    <p class="eyebrow">MILESTONE 05</p>
+    <h2>Unified Security Intelligence</h2>
+    <p class="muted">Consolidated security monitoring dashboard.</p>
+  </div>
+
+  <div class="stats reliability-stats">
+    <article class="stat">
+      <span>Baselines</span>
+      <strong id="secBaselineTotal">—</strong>
+    </article>
+    <article class="stat">
+      <span>Drift Analyses</span>
+      <strong id="secDriftTotal">—</strong>
+    </article>
+    <article class="stat">
+      <span>Reliability Evaluations</span>
+      <strong id="secReliabilityTotal">—</strong>
+    </article>
+    <article class="stat">
+      <span>Threat Analyses</span>
+      <strong id="secThreatTotal">—</strong>
+    </article>
+    <article class="stat">
+      <span>Attack Chain Analyses</span>
+      <strong id="secAttackTotal">—</strong>
+    </article>
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <h2>Latest Security Activity</h2>
+      <span class="tag" id="securityOverviewStatus">Loading</span>
+    </div>
+    <div id="securityLatest" class="grid-two">
+      <p class="empty">Loading latest results...</p>
+    </div>
+  </article>
+</section>
+
+<!-- M5.2 SECURITY POSTURE -->
+
+<section id="security-posture" class="reliability-section">
+  <div class="section-heading">
+    <p class="eyebrow">M5.2</p>
+    <h2>Security Posture Score</h2>
+    <p class="muted">Project-defined heuristic security assessment.</p>
+  </div>
+
+  <article class="panel">
+    <div class="stats reliability-stats">
+      <article class="stat">
+        <span>Overall Score</span>
+        <strong id="postureScore">—</strong>
+      </article>
+      <article class="stat">
+        <span>Rating</span>
+        <strong id="postureRating">—</strong>
+      </article>
+      <article class="stat">
+        <span>Available Weight</span>
+        <strong id="postureWeight">—</strong>
+      </article>
+    </div>
+
+    <div id="postureComponents" class="grid-two"></div>
+    <p class="muted" id="postureMethodology"></p>
+  </article>
+</section>
+
+<!-- M5.3 SEVERITY ANALYTICS -->
+
+<section id="security-analytics" class="reliability-section">
+  <div class="section-heading">
+    <p class="eyebrow">M5.3</p>
+    <h2>Unified Threat Severity Analytics</h2>
+  </div>
+
+  <div class="stats reliability-stats">
+    <article class="stat">
+      <span>Critical</span>
+      <strong id="severityCritical">—</strong>
+    </article>
+    <article class="stat">
+      <span>High</span>
+      <strong id="severityHigh">—</strong>
+    </article>
+    <article class="stat">
+      <span>Total Observations</span>
+      <strong id="severityTotal">—</strong>
+    </article>
+    <article class="stat">
+      <span>Threat Patterns</span>
+      <strong id="severityPatterns">—</strong>
+    </article>
+    <article class="stat">
+      <span>Attack Chains</span>
+      <strong id="severityChains">—</strong>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>Severity Distribution</h2>
+    <div id="severityBreakdown" class="grid-two"></div>
+    <p class="muted" id="severityNote"></p>
+  </article>
+</section>
+
+<!-- M5.4 SECURITY TIMELINE -->
+
+<section id="security-timeline" class="reliability-section">
+  <div class="section-heading">
+    <p class="eyebrow">M5.4</p>
+    <h2>Unified Security Timeline</h2>
+    <p class="muted">Chronological security observations.</p>
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <h2>Recent Security Events</h2>
+      <span class="tag" id="timelineTotal">— events</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Severity</th>
+            <th>Category</th>
+            <th>Event</th>
+            <th>Source</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody id="securityTimelineBody">
+          <tr>
+            <td colspan="6" class="empty">Loading timeline...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted" id="timelineNote"></p>
+  </article>
+</section>
+
+<!-- M5.5 PRIORITIZED ALERTS -->
+
+<section id="security-alerts" class="reliability-section">
+  <div class="section-heading">
+    <p class="eyebrow">M5.5</p>
+    <h2>Prioritized Security Alerts</h2>
+    <p class="muted">High-priority findings and recommended analyst actions.</p>
+  </div>
+
+  <div class="stats reliability-stats">
+    <article class="stat">
+      <span>Total Alerts</span>
+      <strong id="alertTotal">—</strong>
+    </article>
+    <article class="stat">
+      <span>Critical Alerts</span>
+      <strong id="alertCritical">—</strong>
+    </article>
+    <article class="stat">
+      <span>High Alerts</span>
+      <strong id="alertHigh">—</strong>
+    </article>
+  </div>
+
+  <article class="panel">
+    <div class="panel-heading">
+      <h2>Alert Queue</h2>
+      <span class="tag" id="alertQueueStatus">Loading</span>
+    </div>
+
+    <div id="securityAlertsList">
+      <p class="empty">Loading prioritized alerts...</p>
+    </div>
+
+    <p class="muted" id="alertsNote"></p>
+  </article>
+</section>      
+
+      <footer>
+        DriftRadar MVP · Drift is a statistical signal, not proof of an attack or model-performance degradation.
+        Performance metrics require verified labels.
+      </footer>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
